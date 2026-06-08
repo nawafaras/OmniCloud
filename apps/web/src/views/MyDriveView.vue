@@ -24,9 +24,20 @@ import {
 	IconList,
 	IconSearch,
 	IconX,
+	IconArchiveFilled,
+	IconFileDescriptionFilled,
+	IconFileFilled,
+	IconFileMusicFilled,
+	IconFileTextFilled,
+	IconFolderFilled,
+	IconLayoutGridFilled,
+	IconListDetailsFilled,
+	IconPhotoFilled,
+	IconVideoFilled,
 } from '@tabler/icons-vue';
 import DriveShell from '../components/DriveShell.vue';
 import FloatingProgressToast from '../components/FloatingProgressToast.vue';
+import TruncateMarquee from '../components/TruncateMarquee.vue';
 import { useFileTreeStore } from '../stores/fileTree';
 import { useUploadQueueStore } from '../stores/uploadQueue';
 import { api } from '../services/api';
@@ -216,45 +227,45 @@ function getFileCategory(file) {
 	return 'document';
 }
 
-function getFileIcon(file) {
-	if (file.is_folder) return IconFolder;
+function getFileIcon(file, filled = false) {
+	if (file.is_folder) return filled ? IconFolderFilled : IconFolder;
 
 	switch (getFileCategory(file)) {
 		case 'image':
-			return IconPhoto;
+			return filled ? IconPhotoFilled : IconPhoto;
 		case 'pdf':
-			return IconFileTypePdf;
+			return filled ? IconFileFilled : IconFileTypePdf;
 		case 'video':
-			return IconVideo;
+			return filled ? IconVideoFilled : IconVideo;
 		case 'audio':
-			return IconMusic;
+			return filled ? IconFileMusicFilled : IconMusic;
 		case 'archive':
-			return IconFileZip;
+			return filled ? IconArchiveFilled : IconFileZip;
 		case 'document':
 		default:
-			return IconFileText;
+			return filled ? IconFileTextFilled : IconFileText;
 	}
 }
 
-function getTypeFilterIcon(value) {
+function getTypeFilterIcon(value, filled = false) {
 	switch (value) {
 		case 'folder':
-			return IconFolder;
+			return filled ? IconFolderFilled : IconFolder;
 		case 'image':
-			return IconPhoto;
+			return filled ? IconPhotoFilled : IconPhoto;
 		case 'pdf':
-			return IconFileTypePdf;
+			return filled ? IconFileFilled : IconFileTypePdf;
 		case 'video':
-			return IconVideo;
+			return filled ? IconVideoFilled : IconVideo;
 		case 'audio':
-			return IconMusic;
+			return filled ? IconFileMusicFilled : IconMusic;
 		case 'archive':
-			return IconFileZip;
+			return filled ? IconArchiveFilled : IconFileZip;
 		case 'document':
-			return IconFileText;
+			return filled ? IconFileTextFilled : IconFileText;
 		case 'all':
 		default:
-			return IconFileDescription;
+			return filled ? IconFileDescriptionFilled : IconFileDescription;
 	}
 }
 
@@ -819,10 +830,10 @@ onBeforeUnmount(() => {
 
 				<div class="flex items-center gap-2">
 					<button type="button" class="grid size-9 place-items-center rounded-full transition" :class="!isGridView ? 'bg-[#e8f0fe] text-[#1a73e8] dark:bg-sky-500/15 dark:text-sky-300' : 'text-[#5f6368] hover:bg-black/5 dark:text-slate-400 dark:hover:bg-white/8'" @click="toggleViewMode('list')">
-						<IconList :size="18" :stroke="2" />
+						<component :is="!isGridView ? IconListDetailsFilled : IconList" :size="18" :stroke="!isGridView ? 0 : 2" />
 					</button>
 					<button type="button" class="grid size-9 place-items-center rounded-full transition" :class="isGridView ? 'bg-[#e8f0fe] text-[#1a73e8] dark:bg-sky-500/15 dark:text-sky-300' : 'text-[#5f6368] hover:bg-black/5 dark:text-slate-400 dark:hover:bg-white/8'" @click="toggleViewMode('grid')">
-						<IconLayoutGrid :size="18" :stroke="2" />
+						<component :is="isGridView ? IconLayoutGridFilled : IconLayoutGrid" :size="18" :stroke="isGridView ? 0 : 2" />
 					</button>
 					<button type="button" class="grid size-9 place-items-center rounded-full text-[#5f6368] hover:bg-black/5 dark:text-slate-400 dark:hover:bg-white/8">
 						<IconInfoCircle :size="18" :stroke="2" />
@@ -838,9 +849,9 @@ onBeforeUnmount(() => {
 							<IconChevronDown v-else :size="16" :stroke="2" class="text-[#5f6368] dark:text-slate-400" />
 						</button>
 						<div v-if="activeFilterMenu === 'type'" class="absolute right-0 top-full z-30 mt-2 min-w-[220px] overflow-hidden rounded-2xl border border-[#e0e3e7] bg-white p-2 shadow-[0_16px_40px_rgba(32,33,36,0.16)] dark:border-slate-700 dark:bg-slate-800">
-							<button v-for="option in typeOptions" :key="option.value" type="button" class="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm text-[#202124] hover:bg-[#f8fafd] dark:text-slate-100 dark:hover:bg-slate-700/70" @click="applyFilter('type', option.value)">
+							<button v-for="option in typeOptions" :key="option.value" type="button" class="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm transition" :class="selectedTypeFilter === option.value ? 'bg-[#e8f0fe] font-semibold text-[#174ea6] dark:bg-sky-500/15 dark:text-sky-200' : 'text-[#202124] hover:bg-[#f8fafd] dark:text-slate-100 dark:hover:bg-slate-700/70'" @click="applyFilter('type', option.value)">
 								<span class="flex items-center gap-2">
-									<component :is="getTypeFilterIcon(option.value)" :size="16" :stroke="1.8" class="text-[#5f6368] dark:text-slate-400" />
+									<component :is="getTypeFilterIcon(option.value, selectedTypeFilter === option.value)" :size="16" :stroke="selectedTypeFilter === option.value ? 0 : 1.8" :class="selectedTypeFilter === option.value ? 'text-[#1a73e8] dark:text-sky-300' : 'text-[#5f6368] dark:text-slate-400'" />
 									<span>{{ option.label }}</span>
 								</span>
 								<IconCheck v-if="selectedTypeFilter === option.value" :size="16" :stroke="2" class="text-[#1a73e8] dark:text-sky-300" />
@@ -885,9 +896,9 @@ onBeforeUnmount(() => {
 				</div>
 
 				<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-					<button v-for="folder in suggestedFolders" :key="folder.id" type="button" class="flex h-14 items-center gap-3 rounded-2xl border border-[#e0e3e7] bg-white px-4 text-left text-[#202124] transition hover:bg-black/[0.02] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-white/8" @click="openFolder(folder)" @dblclick="openFolder(folder)">
-						<IconFolder :size="18" :stroke="1.8" class="text-[#5f6368] dark:text-slate-400" />
-						<span class="truncate">{{ folder.display_name || folder.file_name }}</span>
+					<button v-for="folder in suggestedFolders" :key="folder.id" type="button" class="group flex h-14 items-center gap-3 rounded-2xl border px-4 text-left transition hover:-translate-y-0.5 hover:border-[#d2e3fc] hover:bg-[#f8fbff] hover:shadow-[0_10px_30px_rgba(32,33,36,0.08)] dark:hover:border-slate-500 dark:hover:bg-white/8" :class="isSelected(folder) ? 'border-[#d2e3fc] bg-gradient-to-r from-[#e8f0fe] to-[#f8fbff] text-[#202124] shadow-[0_10px_30px_rgba(32,33,36,0.08)] dark:border-slate-500 dark:from-sky-500/15 dark:to-slate-800 dark:text-slate-100' : 'border-[#e0e3e7] bg-white text-[#202124] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'" @click="selectItem($event, folder)" @dblclick="openFolder(folder)">
+						<IconFolderFilled :size="18" :stroke="0" class="text-[#1a73e8] transition-transform duration-200 group-hover:scale-110 dark:text-sky-300" />
+						<TruncateMarquee :text="folder.display_name || folder.file_name" />
 					</button>
 				</div>
 			</div>
@@ -926,8 +937,8 @@ onBeforeUnmount(() => {
 
 			<p v-if="actionError" class="mb-4 rounded-2xl bg-[#fce8e6] px-4 py-3 text-sm text-[#c5221f] dark:bg-red-950/40 dark:text-red-300">{{ actionError }}</p>
 
-			<div v-if="!isGridView" class="overflow-hidden rounded-2xl border border-[#e0e3e7] dark:border-slate-700">
-				<div class="grid min-h-11 grid-cols-[minmax(220px,2fr)_1.1fr_1fr_140px] items-center gap-3 bg-[#f8fafd] px-[18px] text-[13px] text-[#5f6368] dark:bg-slate-900/70 dark:text-slate-400 max-lg:grid-cols-[minmax(180px,1.8fr)_1fr_1fr]">
+			<div v-if="!isGridView" class="overflow-x-auto overflow-y-hidden rounded-2xl border border-[#e0e3e7] dark:border-slate-700">
+				<div class="grid min-h-11 min-w-[760px] grid-cols-[minmax(260px,2fr)_minmax(180px,1.1fr)_minmax(150px,1fr)_140px] items-center gap-3 bg-[#f8fafd] px-[18px] text-[13px] text-[#5f6368] dark:bg-slate-900/70 dark:text-slate-400">
 					<button type="button" class="flex items-center gap-1 text-left hover:text-[#1a73e8]" @click="toggleSort('file_name')">
 						<span>Nama</span>
 						<component :is="sortIndicator('file_name')" v-if="sortIndicator('file_name')" :size="14" :stroke="2" />
@@ -940,20 +951,20 @@ onBeforeUnmount(() => {
 						<span>Terakhir diubah</span>
 						<component :is="sortIndicator('updated_at')" v-if="sortIndicator('updated_at')" :size="14" :stroke="2" />
 					</button>
-					<button type="button" class="hidden items-center gap-1 text-left hover:text-[#1a73e8] max-lg:hidden" @click="toggleSort('size')">
+					<button type="button" class="flex items-center gap-1 text-left hover:text-[#1a73e8]" @click="toggleSort('size')">
 						<span>Ukuran file</span>
 						<component :is="sortIndicator('size')" v-if="sortIndicator('size')" :size="14" :stroke="2" />
 					</button>
 				</div>
 
-				<div v-for="item in sortedFiles" :key="item.id" class="grid min-h-[52px] cursor-default select-none grid-cols-[minmax(220px,2fr)_1.1fr_1fr_140px] items-center gap-3 border-t border-[#eceff1] px-[18px] dark:border-slate-700 max-lg:grid-cols-[minmax(180px,1.8fr)_1fr_1fr]" :class="isSelected(item) ? 'bg-[#e8f0fe] dark:bg-sky-500/15' : 'hover:bg-black/[0.02] dark:hover:bg-white/6'" @click="selectItem($event, item)" @dblclick="openItemOnDoubleClick(item)" @contextmenu="openContextMenu($event, item)">
-					<div class="flex items-center gap-2.5 text-[#202124] dark:text-slate-100">
-						<component :is="getFileIcon(item)" :size="18" :stroke="1.8" class="text-[#5f6368] dark:text-slate-400" />
-						<span class="truncate">{{ item.display_name || item.file_name }}</span>
+				<div v-for="item in sortedFiles" :key="item.id" class="group grid min-h-[52px] min-w-[760px] cursor-default select-none grid-cols-[minmax(260px,2fr)_minmax(180px,1.1fr)_minmax(150px,1fr)_140px] items-center gap-3 border-t border-[#eceff1] px-[18px] transition dark:border-slate-700" :class="isSelected(item) ? 'bg-gradient-to-r from-[#e8f0fe] to-[#f8fbff] shadow-[inset_4px_0_0_#1a73e8] dark:from-sky-500/15 dark:to-slate-800 dark:shadow-[inset_4px_0_0_#38bdf8]' : 'hover:bg-black/[0.02] dark:hover:bg-white/6'" @click="selectItem($event, item)" @dblclick="openItemOnDoubleClick(item)" @contextmenu="openContextMenu($event, item)">
+					<div class="flex min-w-0 items-center gap-2.5 text-[#202124] dark:text-slate-100">
+						<component :is="getFileIcon(item, isSelected(item))" :size="18" :stroke="isSelected(item) ? 0 : 1.8" class="transition-transform duration-200 group-hover:scale-110" :class="isSelected(item) ? 'text-[#1a73e8] drop-shadow-sm dark:text-sky-300' : 'text-[#5f6368] dark:text-slate-400'" />
+						<TruncateMarquee :text="item.display_name || item.file_name" />
 					</div>
-					<span class="text-[#5f6368] dark:text-slate-400">{{ item.email }}</span>
+					<TruncateMarquee class="text-[#5f6368] dark:text-slate-400" :text="item.email" />
 					<span class="text-[#5f6368] dark:text-slate-400">{{ formatDate(item.updated_at) }}</span>
-					<span class="text-[#5f6368] dark:text-slate-400 max-lg:hidden">{{ item.is_folder ? '—' : formatBytes(item.size) }}</span>
+					<span class="text-[#5f6368] dark:text-slate-400">{{ item.is_folder ? '—' : formatBytes(item.size) }}</span>
 				</div>
 
 				<div v-if="!sortedFiles.length && !isLoading" class="p-[18px] text-[#5f6368] dark:text-slate-400">Tidak ada file pada lokasi ini.</div>
@@ -961,16 +972,16 @@ onBeforeUnmount(() => {
 			</div>
 
 			<div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-				<div v-for="item in sortedFiles" :key="item.id" class="group select-none rounded-[22px] border p-4 transition hover:border-[#d2e3fc] hover:shadow-[0_10px_30px_rgba(32,33,36,0.08)] dark:hover:border-slate-500" :class="isSelected(item) ? 'border-[#1a73e8] bg-[#e8f0fe] dark:border-sky-400 dark:bg-sky-500/15' : 'border-[#e0e3e7] bg-white dark:border-slate-700 dark:bg-slate-800'" @click="selectItem($event, item)" @dblclick="openItemOnDoubleClick(item)" @contextmenu="openContextMenu($event, item)">
+				<div v-for="item in sortedFiles" :key="item.id" class="group select-none rounded-[22px] border p-4 transition hover:-translate-y-0.5 hover:border-[#d2e3fc] hover:shadow-[0_10px_30px_rgba(32,33,36,0.08)] dark:hover:border-slate-500" :class="isSelected(item) ? 'border-[#1a73e8] bg-gradient-to-br from-[#e8f0fe] to-[#f8fbff] shadow-[0_14px_34px_rgba(26,115,232,0.14)] dark:border-sky-400 dark:from-sky-500/15 dark:to-slate-800' : 'border-[#e0e3e7] bg-white dark:border-slate-700 dark:bg-slate-800'" @click="selectItem($event, item)" @dblclick="openItemOnDoubleClick(item)" @contextmenu="openContextMenu($event, item)">
 					<button type="button" class="flex w-full flex-col items-start gap-4 text-left">
 						<div class="flex w-full items-start justify-between gap-3">
-							<div class="grid size-12 place-items-center rounded-2xl bg-[#f1f3f4] text-[#5f6368] dark:bg-slate-700 dark:text-slate-300">
-								<component :is="getFileIcon(item)" :size="22" :stroke="1.8" />
+							<div class="grid size-12 place-items-center rounded-2xl transition" :class="isSelected(item) ? 'bg-[#d3e3fd] text-[#1a73e8] shadow-inner dark:bg-sky-500/20 dark:text-sky-300' : 'bg-[#f1f3f4] text-[#5f6368] dark:bg-slate-700 dark:text-slate-300'">
+								<component :is="getFileIcon(item, isSelected(item))" :size="22" :stroke="isSelected(item) ? 0 : 1.8" class="transition-transform duration-200 group-hover:scale-110" />
 							</div>
 						</div>
 						<div class="min-w-0">
-							<p class="truncate text-sm font-semibold text-[#202124] dark:text-slate-100">{{ item.display_name || item.file_name }}</p>
-							<p class="mt-1 truncate text-xs text-[#5f6368] dark:text-slate-400">{{ item.email || 'Tanpa pemilik' }}</p>
+							<TruncateMarquee as="p" class="text-sm font-semibold text-[#202124] dark:text-slate-100" :text="item.display_name || item.file_name" />
+							<TruncateMarquee as="p" class="mt-1 text-xs text-[#5f6368] dark:text-slate-400" :text="item.email || 'Tanpa pemilik'" />
 						</div>
 						<div class="flex w-full items-center justify-between text-xs text-[#5f6368] dark:text-slate-400">
 							<span>{{ formatDate(item.updated_at) }}</span>

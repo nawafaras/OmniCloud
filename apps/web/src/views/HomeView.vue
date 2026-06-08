@@ -8,17 +8,15 @@ import {
 	IconLayoutList,
 } from '@tabler/icons-vue';
 import DriveShell from '../components/DriveShell.vue';
+import TruncateMarquee from '../components/TruncateMarquee.vue';
 import { useFileTreeStore } from '../stores/fileTree';
 import { useAccountManagementStore } from '../stores/accountManagement';
-import { api } from '../services/api';
 
 const fileTreeStore = useFileTreeStore();
 const accountStore = useAccountManagementStore();
 
 const { files, isLoading } = storeToRefs(fileTreeStore);
 const { accounts } = storeToRefs(accountStore);
-
-const connectError = ref('');
 
 const quickFiles = computed(() => files.value.filter((file) => !file.is_folder).slice(0, 6));
 const spotlightFolders = computed(() => files.value.filter((file) => file.is_folder).slice(0, 4));
@@ -90,8 +88,6 @@ onMounted(loadPage);
 							Buka Penyimpanan
 						</RouterLink>
 					</div>
-
-					<p v-if="connectError" class="mt-2.5 text-[#d93025]">{{ connectError }}</p>
 				</div>
 
 				<div class="flex flex-col items-center justify-center gap-3.5 rounded-[20px] border border-[#e0e3e7] bg-white p-5 text-center dark:border-slate-700 dark:bg-slate-800/80">
@@ -112,12 +108,12 @@ onMounted(loadPage);
 				</div>
 
 				<div class="grid grid-cols-1 gap-3.5 md:grid-cols-2 xl:grid-cols-4">
-					<article v-for="folder in spotlightFolders" :key="folder.id" class="rounded-2xl border border-[#e0e3e7] bg-white p-4 dark:border-slate-700 dark:bg-slate-900/60">
+					<article v-for="folder in spotlightFolders" :key="folder.id" class="min-w-0 rounded-2xl border border-[#e0e3e7] bg-white p-4 dark:border-slate-700 dark:bg-slate-900/60">
 						<div class="mb-3 text-[#1a73e8]">
 							<IconFolder :size="28" :stroke="1.8" />
 						</div>
-						<strong>{{ folder.display_name || folder.file_name }}</strong>
-						<p class="text-[#5f6368] dark:text-slate-400">{{ folder.provider }}</p>
+						<TruncateMarquee as="strong" :text="folder.display_name || folder.file_name" />
+						<TruncateMarquee as="p" class="text-[#5f6368] dark:text-slate-400" :text="folder.provider" />
 					</article>
 					<div v-if="!spotlightFolders.length && !isLoading" class="rounded-2xl border border-[#e0e3e7] p-[18px] text-[#5f6368] dark:border-slate-700 dark:text-slate-400">
 						Belum ada folder tersinkron.
@@ -139,41 +135,17 @@ onMounted(loadPage);
 						<span class="max-md:hidden">Ukuran file</span>
 					</div>
 
-					<div v-for="file in quickFiles" :key="file.id" class="grid min-h-[52px] grid-cols-[minmax(220px,2fr)_1.1fr_1fr_140px] items-center gap-3 border-t border-[#eceff1] px-[18px] dark:border-slate-700 max-md:grid-cols-[minmax(180px,1.8fr)_1fr_1fr]">
-						<span class="flex items-center gap-2.5 text-[#202124] dark:text-slate-100">
+					<div v-for="file in quickFiles" :key="file.id" class="grid min-h-[52px] grid-cols-[minmax(0,2fr)_minmax(0,1.1fr)_minmax(0,1fr)_140px] items-center gap-3 border-t border-[#eceff1] px-[18px] dark:border-slate-700 max-md:grid-cols-[minmax(0,1.8fr)_minmax(0,1fr)_minmax(0,1fr)]">
+						<span class="flex min-w-0 items-center gap-2.5 text-[#202124] dark:text-slate-100">
 							<IconFileDescription :size="18" :stroke="1.8" class="text-[#5f6368] dark:text-slate-400" />
-							{{ file.display_name || file.file_name }}
+							<TruncateMarquee :text="file.display_name || file.file_name" />
 						</span>
-						<span class="text-[#5f6368] dark:text-slate-400">{{ file.email }}</span>
+						<TruncateMarquee class="text-[#5f6368] dark:text-slate-400" :text="file.email" />
 						<span class="text-[#5f6368] dark:text-slate-400">{{ formatDate(file.updated_at) }}</span>
 						<span class="text-[#5f6368] dark:text-slate-400 max-md:hidden">{{ formatBytes(file.size) }}</span>
 					</div>
 
 					<div v-if="!quickFiles.length && !isLoading" class="p-[18px] text-[#5f6368] dark:text-slate-400">Belum ada file terbaru.</div>
-				</div>
-			</section>
-
-			<section class="mt-[26px]">
-				<div class="mb-3 flex items-center justify-between gap-3">
-					<h2 class="m-0 text-base font-medium text-[#202124] dark:text-slate-100">Akun terhubung</h2>
-					<button type="button" class="rounded-full border border-[#dadce0] bg-white px-3.5 py-2 text-[#1a73e8] dark:border-slate-600 dark:bg-slate-800 dark:text-sky-400">Kelola</button>
-				</div>
-
-				<div class="grid grid-cols-1 gap-3.5 md:grid-cols-2 xl:grid-cols-3">
-					<article v-for="account in accounts" :key="account.id" class="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl border border-[#e0e3e7] bg-white p-4 dark:border-slate-700 dark:bg-slate-900/60">
-						<div class="grid size-9 place-items-center rounded-full bg-[#e8f0fe] font-bold text-[#1a73e8]">
-							{{ account.email?.slice(0, 1).toUpperCase() || 'G' }}
-						</div>
-						<div>
-							<strong>{{ account.email }}</strong>
-							<p class="text-[#5f6368] dark:text-slate-400">{{ account.provider }}</p>
-						</div>
-						<span class="text-xs font-semibold capitalize text-[#188038]">{{ account.status }}</span>
-					</article>
-
-					<div v-if="!accounts.length" class="rounded-2xl border border-[#e0e3e7] p-[18px] text-[#5f6368] dark:border-slate-700 dark:text-slate-400">
-						Belum ada akun terhubung.
-					</div>
 				</div>
 			</section>
 		</div>

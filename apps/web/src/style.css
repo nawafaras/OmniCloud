@@ -34,3 +34,31 @@
 		cursor: pointer;
 	}
 }
+
+@layer components {
+	.truncate-marquee {
+		display: block;
+		min-width: 0;
+		max-width: 100%;
+		overflow: hidden;
+		white-space: nowrap;
+	}
+
+	.truncate-marquee__track {
+		display: inline-block;
+		max-width: none;
+		will-change: transform;
+	}
+
+	.truncate-marquee__text {
+		display: inline-block;
+		vertical-align: top;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.truncate-marquee__track {
+			animation: none;
+			transform: translateX(0) !important;
+		}
+	}
+}

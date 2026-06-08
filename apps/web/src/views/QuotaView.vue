@@ -12,6 +12,7 @@ import {
 } from '@tabler/icons-vue';
 import DriveShell from '../components/DriveShell.vue';
 import MegaConnectModal from '../components/MegaConnectModal.vue';
+import TruncateMarquee from '../components/TruncateMarquee.vue';
 import { useAccountManagementStore } from '../stores/accountManagement';
 import { api } from '../services/api';
 
@@ -309,11 +310,11 @@ onMounted(loadPage);
 				</div>
 
 				<div class="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-					<div v-for="account in accountLegends" :key="account.id" class="rounded-[22px] border border-[#e3e8ee] bg-[#f8fafd] p-4 dark:border-slate-700 dark:bg-slate-800/85">
+					<div v-for="account in accountLegends" :key="account.id" class="min-w-0 rounded-[22px] border border-[#e3e8ee] bg-[#f8fafd] p-4 dark:border-slate-700 dark:bg-slate-800/85">
 						<div class="flex items-start justify-between gap-3">
-							<div>
-								<p class="text-sm font-semibold">{{ account.email }}</p>
-								<p class="text-xs text-[#5f6368] dark:text-slate-400">{{ providerLabel(account.provider) }}</p>
+							<div class="min-w-0">
+								<TruncateMarquee as="p" class="text-sm font-semibold" :text="account.email" />
+								<TruncateMarquee as="p" class="text-xs text-[#5f6368] dark:text-slate-400" :text="providerLabel(account.provider)" />
 							</div>
 							<div class="grid gap-1 text-xs">
 								<span class="inline-flex items-center gap-2">
