@@ -15,11 +15,11 @@ Use these callback URLs while running OmniCloud locally:
 | Dropbox | `http://localhost:8787/api/accounts/dropbox/callback` |
 | MEGA | Not applicable |
 
-If you change the API port or deploy the API to another domain, update the redirect URIs in both the provider dashboard and `services/api/.env`.
+If you change the API port or deploy the API to another domain, update the redirect URIs in both the provider dashboard and `backend/.env`.
 
 ## Environment variables
 
-Add the credentials to `services/api/.env`:
+Add the credentials to `backend/.env`:
 
 ```env
 GOOGLE_CLIENT_ID=

@@ -7,10 +7,10 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "npm-run-all --parallel dev:api dev:web",
     "build": "npm run build:web",
-    "build:web": "npm --prefix apps/web run build",
-    "dev:web": "npm --prefix apps/web run dev -- --host",
-    "dev:api": "npm --prefix services/api run dev",
-    "start": "npm --prefix services/api start"
+    "build:web": "npm --prefix frontend run build",
+    "dev:web": "npm --prefix frontend run dev -- --host",
+    "dev:api": "npm --prefix backend run dev",
+    "start": "npm --prefix backend start"
   },
   "keywords": [],
   "author": "",

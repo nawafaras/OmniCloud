@@ -1,47 +1,71 @@
 # OmniCloud
 
-OmniCloud is a cloud-drive aggregation app that provides a Google Drive-inspired interface on top of multiple storage providers. It supports real provider connections through a shared adapter architecture.
+OmniCloud is a full-stack cloud drive aggregation platform that presents multiple storage providers through a single, consistent workspace. The application combines a Vue-based client with an Express API and provider adapter layer, enabling users to browse, upload, download, and manage files across connected cloud accounts from one interface.
 
-## Highlights
+## ✨ Overview
 
-- Real cloud account connections via provider-specific authentication
-- Encrypted local storage for provider tokens, sessions, and credentials
-- Unified file browser with virtual paths
-- Google Drive-like `Home` and `My Drive` experience
-- Folder creation, rename, delete, file details, and download
-- File upload with drag-and-drop, file upload, and folder upload
-- Upload progress over WebSocket
-- Local metadata mirror in SQLite
-- Scheduled synchronization to keep mirrored data aligned with provider state
-- Dark mode support
-- Tailwind CSS v4 UI with `@tabler/icons-vue`
+OmniCloud is designed around a unified file experience:
 
-## Current provider status
+- Connect supported cloud storage accounts through provider-specific authentication
+- Browse provider content through a normalized virtual file tree
+- Manage files and folders through a single UI
+- Stream uploads through the API with real-time progress updates
+- Maintain a local metadata mirror for responsive navigation and synchronization
 
-| Provider | Status |
+## 🚀 Core capabilities
+
+### 🗂️ Unified storage interface
+- Consolidated file browsing across connected providers
+- `Home` and `My Drive` style navigation
+- Normalized virtual paths for cross-provider access patterns
+
+### 📁 File and folder operations
+- Create folders
+- Rename files and folders
+- Delete files and folders
+- Download provider files
+- View file metadata and details
+
+### ⬆️ Upload workflow
+- File upload from the browser
+- Folder upload support
+- Drag-and-drop upload interactions
+- WebSocket-based progress reporting
+
+### 🔗 Account and quota management
+- Real provider account connections
+- Local persistence of linked account metadata
+- Per-account storage usage tracking
+
+### ⚙️ Operational architecture
+- Shared adapter model for provider integrations
+- SQLite-backed metadata mirror
+- Scheduled synchronization jobs
+- Secure local persistence for provider credentials and tokens
+
+## ☁️ Supported providers
+
+| Provider | Integration |
 | --- | --- |
-| Google Drive | Implemented and actively used |
-| OneDrive | Implemented with Microsoft Graph |
-| Dropbox | Implemented with OAuth and Dropbox file APIs |
-| MEGA | Implemented with MEGA login and file APIs |
-| S3-compatible | Basic adapter groundwork |
+| Google Drive | OAuth + Drive API |
+| OneDrive | Microsoft Graph |
+| Dropbox | OAuth + Dropbox file APIs |
+| MEGA | Account login + file APIs |
+| S3-compatible | Adapter foundation |
 
-## Monorepo structure
+## 🏗️ Architecture
 
 ```text
 OmniCloud/
-├─ apps/
-│  └─ web/           # Vue 3 frontend
-├─ services/
-│  └─ api/           # Express API, sync, adapters, SQLite
-├─ blueprint.md      # Original architecture blueprint
-├─ package.json      # Root workspace scripts
+├─ frontend/         # Vue 3 application
+├─ backend/          # Express API, adapters, sync, SQLite
+├─ docs/             # Supporting documentation
+├─ package.json      # Workspace scripts
+├─ LICENSE
 └─ README.md
 ```
 
-## Tech stack
-
-### Frontend
+### 🎨 Frontend
 - Vue 3
 - Vite
 - Pinia
@@ -49,79 +73,51 @@ OmniCloud/
 - Tailwind CSS v4
 - `@tabler/icons-vue`
 
-### Backend
+### 🧩 Backend
 - Node.js
 - Express
-- WebSocket (`ws`)
+- WebSocket via `ws`
 - SQLite via `better-sqlite3`
-- Provider API integrations and SDKs
-- `node-cron` for background sync
+- `node-cron` for scheduled synchronization
+- Provider SDKs and API integrations
 
-## How it works
+## 🔄 How it works
 
-OmniCloud uses a passthrough-style backend:
+The frontend communicates exclusively with the API layer. The API delegates provider-specific behavior to adapter implementations, mirrors file metadata into SQLite, and coordinates synchronization and upload progress events.
 
-- the frontend requests file operations through the API,
-- the backend talks to the cloud provider,
-- file and folder metadata are mirrored into SQLite,
-- uploads stream through the backend and report progress over WebSocket,
-- sync jobs refresh the local mirror so the UI reflects the latest remote state.
+At a high level:
 
-The goal is to let users browse a unified virtual file tree while still working with real provider data.
+1. the client requests file or account operations through the API
+2. the API selects the appropriate provider adapter
+3. provider responses are normalized into the OmniCloud data model
+4. metadata is stored locally for fast navigation and sync workflows
+5. upload progress is published to the client over WebSocket connections
 
-## Features
+## 📋 Requirements
 
-### Account connection
-- Connect real cloud provider accounts
-- Persist linked cloud account metadata locally
-- Track quota usage per account
+Before running OmniCloud locally, ensure the following are installed and available:
 
-### File management
-- Browse files by virtual path
-- Open `Home` and `My Drive` views
-- Create folders
-- Rename files and folders
-- Delete files and folders
-- View file details
-- Download files from the provider
-
-### Uploads
-- Upload files from the browser
-- Upload folders
-- Drag and drop files or folders into `My Drive`
-- Show live progress via WebSocket
-
-### UI/UX
-- Google Drive-inspired layout
-- Light and dark theme
-- Context menu actions in `My Drive`
-- Plus Jakarta Sans typography
-
-## Requirements
-
-Before running the project, make sure you have:
-
-- Node.js 20+ recommended
+- Node.js 20 or newer
 - npm
-- Provider credentials or account access as needed
+- provider credentials for any cloud integrations you intend to use
 
-## Setup
+For best tooling compatibility, use an LTS Node.js release.
 
-### 1. Install dependencies
+## 🛠️ Getting started
+
+### 1️⃣ Install dependencies
 
 From the repository root:
 
 - `npm install`
 
-If dependencies are already installed, you can skip this step.
+### 2️⃣ Configure environment variables
 
-### 2. Configure the API environment
+Create a local environment file for the API:
 
-Copy:
+- copy `backend/.env.example` to `backend/.env`
 
-- `services/api/.env.example` → `services/api/.env`
-
-Example environment values:
+Example values:
 
 ```env
 PORT=8787
@@ -140,53 +136,47 @@ DROPBOX_CLIENT_SECRET=
 DROPBOX_REDIRECT_URI=http://localhost:8787/api/accounts/dropbox/callback
 ```
 
-### 3. Configure provider credentials
+### 3️⃣ Configure provider credentials
 
-Follow the detailed provider guide:
+Provider setup instructions are documented in:
 
 - [`docs/provider-setup.md`](docs/provider-setup.md)
 
-## Running the project
+## 💻 Development
 
-### Development
-
-Run frontend and backend together from the root:
+Run the frontend and backend together from the repository root:
 
 - `npm run dev`
 
-Default local URLs:
+Default local endpoints:
 
 - Frontend: `http://localhost:5173`
 - API: `http://localhost:8787`
 
-### Frontend only build
+### 📌 Available scripts
 
-- `npm run build`
+Root scripts exposed by `package.json`:
 
-### Backend only
+| Script | Description |
+| --- | --- |
+| `npm run dev` | Run frontend and backend in parallel |
+| `npm run build` | Build the frontend application |
+| `npm run dev:web` | Run only the frontend dev server |
+| `npm run dev:api` | Run only the backend API server |
+| `npm start` | Start the backend server |
 
-- `npm start`
+## 🔌 API surface
 
-## Root scripts
+Representative endpoints include:
 
-Available commands in the root `package.json`:
-
-- `npm run dev` — run API and web app in parallel
-- `npm run build` — build the frontend
-- `npm run dev:web` — run only the Vue app
-- `npm run dev:api` — run only the API server
-- `npm start` — start the backend server
-
-## Main API endpoints
-
-### Health
+### ❤️ Health
 - `GET /api/health`
 
-### Accounts
+### 👤 Accounts
 - `GET /api/accounts`
-- Provider connect/status routes are available under `/api/accounts/...`
+- provider connect and callback routes under `/api/accounts/...`
 
-### Files
+### 📄 Files
 - `GET /api/files?path=/`
 - `GET /api/files/:id`
 - `GET /api/files/:id/download`
@@ -194,37 +184,18 @@ Available commands in the root `package.json`:
 - `DELETE /api/files/:id`
 - `POST /api/files/folders`
 
-### Uploads
+### 📤 Uploads
 - `POST /api/uploads/initiate`
 - `POST /api/uploads/:uploadId/stream`
 - `WS /ws/uploads?uploadId=...`
 
-## Project notes
+## 🔒 Data and security
 
-- The local database is stored in `services/api/omnicloud.db`.
-- Cloud metadata is mirrored locally and refreshed after relevant operations.
-- Multi-provider pooling is not fully completed yet.
-- Move operations and broader provider expansion are still future work.
+- Local metadata is stored in `backend/omnicloud.db`
+- Environment files and local database files should not be committed
+- OAuth credentials, refresh tokens, and provider credentials must be treated as sensitive material
+- Provider application consent and callback settings should be reviewed before using production credentials
 
-## Security notes
+## 📄 License
 
-- Do not commit `.env` or local database files.
-- OAuth credentials, refresh tokens, provider credentials, and local database files are sensitive.
-- Review your provider app consent configuration before using this project with real accounts.
-
-## Roadmap
-
-- Improve unified storage pooling logic
-- Add move operations across the virtual file tree
-- Harden multi-account production readiness
-
-## Related files
-
-- `blueprint.md` — original architecture and system design
-- `docs/provider-setup.md` — detailed credential setup for supported providers
-- `apps/web/README.md` — frontend template/readme source
-- `services/api/README.md` — backend-specific short readme
-
-## License
-
-No explicit license has been defined yet in this repository.
+This project is licensed under the [MIT License](LICENSE).

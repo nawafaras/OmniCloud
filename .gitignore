@@ -1,25 +1,25 @@
 # Dependencies
 node_modules/
-apps/web/node_modules/
-services/api/node_modules/
+frontend/node_modules/
+backend/node_modules/
 
 # Build output
-apps/web/dist/
+frontend/dist/
 coverage/
 
 # Environment files
 .env
 .env.*
 !.env.example
-services/api/.env
-services/api/.env.*
-!services/api/.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
 credentials.json
-services/api/credentials.json
+backend/credentials.json
 
 # Database and local runtime data
-services/api/omnicloud.db
-services/api/omnicloud.db-*
+backend/omnicloud.db
+backend/omnicloud.db-*
 *.sqlite
 *.sqlite3
 

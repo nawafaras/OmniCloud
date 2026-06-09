@@ -9,7 +9,7 @@ const oauthStates = new Map();
 
 function readGoogleCredentials() {
 	if (!env.googleClientId || !env.googleClientSecret) {
-		throw new Error('Google OAuth is not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in services/api/.env');
+		throw new Error('Google OAuth is not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in backend/.env');
 	}
 
 	return {
