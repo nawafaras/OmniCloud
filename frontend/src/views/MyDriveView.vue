@@ -110,14 +110,21 @@ const ownerOptions = computed(() => {
 	const ownerMap = new Map();
 
 	filteredFiles.value.forEach((file) => {
-		if (!file.email || ownerMap.has(file.email)) return;
-		ownerMap.set(file.email, {
+		if (!file.email) return;
+		const key = `${file.provider || 'unknown'}::${file.email}`;
+		if (ownerMap.has(key)) return;
+		ownerMap.set(key, {
+			key,
 			email: file.email,
 			provider: file.provider || null,
 		});
 	});
 
-	return [...ownerMap.values()].sort((left, right) => left.email.localeCompare(right.email, 'id'));
+	return [...ownerMap.values()].sort((left, right) => {
+		const byEmail = left.email.localeCompare(right.email, 'id');
+		if (byEmail !== 0) return byEmail;
+		return providerLabel(left.provider).localeCompare(providerLabel(right.provider), 'id');
+	});
 });
 
 const typeOptions = computed(() => [
@@ -143,7 +150,8 @@ const updatedOptions = computed(() => [
 const visibleFiles = computed(() => {
 	return filteredFiles.value.filter((file) => {
 		const typeMatches = selectedTypeFilter.value === 'all' || getFileCategory(file) === selectedTypeFilter.value;
-		const ownerMatches = selectedOwnerFilter.value === 'all' || file.email === selectedOwnerFilter.value;
+		const ownerKey = `${file.provider || 'unknown'}::${file.email}`;
+		const ownerMatches = selectedOwnerFilter.value === 'all' || ownerKey === selectedOwnerFilter.value;
 		const updatedMatches = selectedUpdatedFilter.value === 'all' || matchesUpdatedFilter(getModifiedTime(file), selectedUpdatedFilter.value);
 		return typeMatches && ownerMatches && updatedMatches;
 	});
@@ -389,7 +397,10 @@ function toggleViewMode(mode) {
 }
 
 function renderOwnerLabel(value) {
-	return value === 'all' ? t('filters.allOwners') : value;
+	if (value === 'all') return t('filters.allOwners');
+	const owner = ownerOptions.value.find((item) => item.key === value);
+	if (!owner) return t('filters.allOwners');
+	return `${owner.email} · ${providerLabel(owner.provider)}`;
 }
 
 function openFolder(file) {
@@ -1003,15 +1014,17 @@ onBeforeUnmount(() => {
 								</span>
 								<IconCheck v-if="selectedOwnerFilter === 'all'" :size="16" :stroke="2" class="text-[#1a73e8] dark:text-sky-300" />
 							</button>
-							<button v-for="owner in ownerOptions" :key="owner.email" type="button" class="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm text-[#202124] hover:bg-[#f8fafd] dark:text-slate-100 dark:hover:bg-slate-700/70" @click="applyFilter('owner', owner.email)">
+							<button v-for="owner in ownerOptions" :key="owner.key" type="button" class="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm text-[#202124] hover:bg-[#f8fafd] dark:text-slate-100 dark:hover:bg-slate-700/70" @click="applyFilter('owner', owner.key)">
 								<span class="flex min-w-0 items-center gap-2">
 									<div v-if="providerIcon(owner.provider)" class="flex size-5 shrink-0 items-center justify-center rounded-full bg-white dark:bg-slate-900/70">
 										<img :src="providerIcon(owner.provider)" :alt="providerLabel(owner.provider)" class="size-3.5 object-contain" />
 									</div>
 									<div v-else class="size-5 shrink-0"></div>
-									<span class="truncate">{{ owner.email }}</span>
+									<span class="flex min-w-0 flex-col">
+										<span class="truncate">{{ owner.email }}</span>
+									</span>
 								</span>
-								<IconCheck v-if="selectedOwnerFilter === owner.email" :size="16" :stroke="2" class="text-[#1a73e8] dark:text-sky-300" />
+								<IconCheck v-if="selectedOwnerFilter === owner.key" :size="16" :stroke="2" class="text-[#1a73e8] dark:text-sky-300" />
 							</button>
 						</div>
 					</div>
