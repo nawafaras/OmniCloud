@@ -867,6 +867,7 @@ function handleGlobalPointer() {
 	if (contextMenu.value.visible) {
 		closeContextMenu();
 	}
+	clearSelection();
 }
 
 function handleVisibilityChange() {
@@ -905,7 +906,7 @@ onBeforeUnmount(() => {
 
 <template>
 	<DriveShell current-section="drive" @new-folder="createNewFolder" @upload-files="openFilePicker" @upload-folder="openFolderPicker">
-		<div class="relative min-h-[calc(100vh-84px)] rounded-[24px] bg-white px-4 py-[18px] pb-5 text-[#202124] dark:bg-slate-800 dark:text-slate-100 sm:px-6" @click.self="clearSelection" @dragenter.prevent="handleDragEnter" @dragover.prevent="handleDragEnter" @dragleave.prevent="handleDragLeave" @drop.prevent="handleDrop">
+		<div class="relative min-h-[calc(100vh-84px)] rounded-[24px] bg-white px-4 py-[18px] pb-5 text-[#202124] dark:bg-slate-800 dark:text-slate-100 sm:px-6" @click="clearSelection" @dragenter.prevent="handleDragEnter" @dragover.prevent="handleDragEnter" @dragleave.prevent="handleDragLeave" @drop.prevent="handleDrop">
 			<input ref="fileInputRef" class="hidden" type="file" multiple @change="onFileInputChange" />
 			<input ref="folderInputRef" class="hidden" type="file" multiple webkitdirectory directory @change="onFolderInputChange" />
 
@@ -1058,7 +1059,7 @@ onBeforeUnmount(() => {
 							</button>
 						</div>
 
-						<div v-for="item in renderedFiles" :key="item.id" class="group grid min-h-[52px] cursor-default select-none grid-cols-[minmax(260px,2fr)_minmax(180px,1.1fr)_minmax(150px,1fr)_140px] items-center gap-3 border-t border-[#eceff1] px-[18px] transition first:border-t-0 dark:border-slate-700" :class="isSelected(item) ? 'bg-gradient-to-r from-[#e8f0fe] to-[#f8fbff] shadow-[inset_4px_0_0_#1a73e8] dark:from-sky-500/15 dark:to-slate-800 dark:shadow-[inset_4px_0_0_#38bdf8]' : 'hover:bg-black/[0.02] dark:hover:bg-white/6'" @click="selectItem($event, item)" @dblclick="openItemOnDoubleClick(item)" @contextmenu="openContextMenu($event, item)">
+						<div v-for="item in renderedFiles" :key="item.id" class="group grid min-h-[52px] cursor-default select-none grid-cols-[minmax(260px,2fr)_minmax(180px,1.1fr)_minmax(150px,1fr)_140px] items-center gap-3 border-t border-[#eceff1] px-[18px] transition first:border-t-0 dark:border-slate-700" :class="isSelected(item) ? 'bg-gradient-to-r from-[#e8f0fe] to-[#f8fbff] shadow-[inset_4px_0_0_#1a73e8] dark:from-sky-500/15 dark:to-slate-800 dark:shadow-[inset_4px_0_0_#38bdf8]' : 'hover:bg-black/[0.02] dark:hover:bg-white/6'" @click.stop="selectItem($event, item)" @dblclick="openItemOnDoubleClick(item)" @contextmenu="openContextMenu($event, item)">
 							<div class="flex min-w-0 items-center gap-2.5 text-[#202124] dark:text-slate-100">
 								<component :is="getFileIcon(item, isSelected(item))" :size="18" :stroke="isSelected(item) ? 0 : 1.8" class="transition-transform duration-200 group-hover:scale-110" :class="isSelected(item) ? 'text-[#1a73e8] drop-shadow-sm dark:text-sky-300' : 'text-[#5f6368] dark:text-slate-400'" />
 								<TruncateMarquee :text="item.display_name || item.file_name" />
@@ -1081,7 +1082,7 @@ onBeforeUnmount(() => {
 			</div>
 
 			<div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-				<div v-for="item in renderedFiles" :key="item.id" class="group select-none rounded-[22px] border p-4 transition hover:-translate-y-0.5 hover:border-[#d2e3fc] hover:shadow-[0_10px_30px_rgba(32,33,36,0.08)] dark:hover:border-slate-500" :class="isSelected(item) ? 'border-[#1a73e8] bg-gradient-to-br from-[#e8f0fe] to-[#f8fbff] shadow-[0_14px_34px_rgba(26,115,232,0.14)] dark:border-sky-400 dark:from-sky-500/15 dark:to-slate-800' : 'border-[#e0e3e7] bg-white dark:border-slate-700 dark:bg-slate-800'" @click="selectItem($event, item)" @dblclick="openItemOnDoubleClick(item)" @contextmenu="openContextMenu($event, item)">
+				<div v-for="item in renderedFiles" :key="item.id" class="group select-none rounded-[22px] border p-4 transition hover:-translate-y-0.5 hover:border-[#d2e3fc] hover:shadow-[0_10px_30px_rgba(32,33,36,0.08)] dark:hover:border-slate-500" :class="isSelected(item) ? 'border-[#1a73e8] bg-gradient-to-br from-[#e8f0fe] to-[#f8fbff] shadow-[0_14px_34px_rgba(26,115,232,0.14)] dark:border-sky-400 dark:from-sky-500/15 dark:to-slate-800' : 'border-[#e0e3e7] bg-white dark:border-slate-700 dark:bg-slate-800'" @click.stop="selectItem($event, item)" @dblclick="openItemOnDoubleClick(item)" @contextmenu="openContextMenu($event, item)">
 					<button type="button" class="flex w-full flex-col items-start gap-4 text-left">
 						<div class="flex w-full items-start justify-between gap-3">
 							<div class="grid size-12 place-items-center rounded-2xl transition" :class="isSelected(item) ? 'bg-[#d3e3fd] text-[#1a73e8] shadow-inner dark:bg-sky-500/20 dark:text-sky-300' : 'bg-[#f1f3f4] text-[#5f6368] dark:bg-slate-700 dark:text-slate-300'">
