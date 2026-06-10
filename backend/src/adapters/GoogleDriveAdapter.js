@@ -146,6 +146,74 @@ export class GoogleDriveAdapter extends BaseCloudAdapter {
 		}));
 	}
 
+	async listSharedWithMe() {
+		const drive = await this.getDriveClient();
+		const files = [];
+		let pageToken;
+
+		do {
+			const response = await drive.files.list({
+				q: 'sharedWithMe = true and trashed = false',
+				fields: 'nextPageToken, files(id, name, mimeType, size, parents, starred, createdTime, modifiedTime, owners(displayName,emailAddress))',
+				pageSize: 1000,
+				pageToken,
+				supportsAllDrives: false,
+			});
+
+			files.push(...(response.data.files || []));
+			pageToken = response.data.nextPageToken || undefined;
+		} while (pageToken);
+
+		return files.map((file) => ({
+			file_name: file.name,
+			is_folder: file.mimeType === FOLDER_MIME_TYPE,
+			is_starred: file.starred ? 1 : 0,
+			size: Number(file.size || 0),
+			mime_type: file.mimeType || null,
+			remote_file_id: file.id,
+			remote_parent_id: file.parents?.[0] || null,
+			remote_drive_id: null,
+			createdTime: file.createdTime || null,
+			modifiedTime: file.modifiedTime || null,
+			owner_name: file.owners?.[0]?.displayName || null,
+			owner_email: file.owners?.[0]?.emailAddress || this.account.email,
+		}));
+	}
+
+	async listSharedFolderChildren(folderRecord) {
+		const drive = await this.getDriveClient();
+		const files = [];
+		let pageToken;
+
+		do {
+			const response = await drive.files.list({
+				q: [`'${escapeDriveQueryValue(folderRecord.remote_file_id)}' in parents`, 'trashed = false'].join(' and '),
+				fields: 'nextPageToken, files(id, name, mimeType, size, parents, starred, createdTime, modifiedTime, owners(displayName,emailAddress))',
+				pageSize: 1000,
+				pageToken,
+				supportsAllDrives: false,
+			});
+
+			files.push(...(response.data.files || []));
+			pageToken = response.data.nextPageToken || undefined;
+		} while (pageToken);
+
+		return files.map((file) => ({
+			file_name: file.name,
+			is_folder: file.mimeType === FOLDER_MIME_TYPE,
+			is_starred: file.starred ? 1 : 0,
+			size: Number(file.size || 0),
+			mime_type: file.mimeType || null,
+			remote_file_id: file.id,
+			remote_parent_id: file.parents?.[0] || folderRecord.remote_file_id,
+			remote_drive_id: null,
+			createdTime: file.createdTime || null,
+			modifiedTime: file.modifiedTime || null,
+			owner_name: file.owners?.[0]?.displayName || null,
+			owner_email: file.owners?.[0]?.emailAddress || this.account.email,
+		}));
+	}
+
 	async setFileStarred(fileRecord, isStarred) {
 		const drive = await this.getDriveClient();
 		await drive.files.update({
@@ -263,7 +331,10 @@ export class GoogleDriveAdapter extends BaseCloudAdapter {
 		const remote = response.data;
 		return {
 			name: remote.name,
+			file_name: remote.name,
+			is_folder: remote.mimeType === FOLDER_MIME_TYPE,
 			mimeType: remote.mimeType,
+			mime_type: remote.mimeType,
 			size: Number(remote.size || fileRecord.size || 0),
 			createdTime: remote.createdTime,
 			modifiedTime: remote.modifiedTime,
@@ -271,7 +342,9 @@ export class GoogleDriveAdapter extends BaseCloudAdapter {
 			webContentLink: remote.webContentLink,
 			owner_name: remote.owners?.[0]?.displayName || null,
 			owner_email: remote.owners?.[0]?.emailAddress || this.account.email,
+			remote_file_id: remote.id,
 			remote_parent_id: remote.parents?.[0] || fileRecord.remote_parent_id || null,
+			remote_drive_id: null,
 			provider: 'google-drive',
 		};
 	}

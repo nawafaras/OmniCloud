@@ -41,6 +41,12 @@ export const api = {
 	listRecentFiles() {
 		return request('/files?recent=1');
 	},
+	listSharedWithMeFiles() {
+		return request('/files?shared=1');
+	},
+	listSharedFolderChildren(fileId) {
+		return request(`/files/${fileId}/shared-children`);
+	},
 	getFileDetails(fileId) {
 		return request(`/files/${fileId}`);
 	},

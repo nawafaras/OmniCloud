@@ -173,7 +173,7 @@ onBeforeUnmount(() => {
 const navItems = computed(() => [
 	{ id: 'home', label: t('nav.home'), icon: IconHome, activeIcon: IconHomeFilled, to: '/' },
 	{ id: 'drive', label: t('nav.myDrive'), icon: IconFolder, activeIcon: IconFolderFilled, to: '/my-drive' },
-	{ id: 'shared', label: t('nav.shared'), icon: IconUsers, activeIcon: IconUserFilled, to: '/my-drive' },
+	{ id: 'shared', label: t('nav.shared'), icon: IconUsers, activeIcon: IconUserFilled, to: '/shared-with-me' },
 	{ id: 'recent', label: t('nav.recent'), icon: IconClockHour4, activeIcon: IconClockHour4Filled, to: '/recent' },
 	{ id: 'starred', label: t('nav.starred'), icon: IconStar, activeIcon: IconStarFilled, to: '/starred' },
 	{ id: 'storage', label: t('nav.storage'), icon: IconCloud, activeIcon: IconCloudFilled, to: '/quota' },

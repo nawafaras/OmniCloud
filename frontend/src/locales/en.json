@@ -87,6 +87,9 @@
 		"older": "Older",
 		"empty": "No recent files yet."
 	},
+	"shared": {
+		"empty": "No files have been shared with you from compatible providers yet."
+	},
 	"drive": {
 		"title": "My Drive",
 		"starredTitle": "Starred",
@@ -100,7 +103,7 @@
 		"searchInFolder": "Search in current folder...",
 		"noFiles": "No files in this virtual path.",
 		"noOwner": "No owner",
-		"loadingMetadata": "Loading metadata mirror...",
+		"loadingMetadata": "Loading...",
 		"rename": "Rename",
 		"deleteConfirm": "Delete {name}?",
 		"deleteConfirmDesc": "Item will be moved to trash.",

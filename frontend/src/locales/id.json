@@ -87,6 +87,9 @@
 		"older": "Lebih lama",
 		"empty": "Belum ada file terbaru."
 	},
+	"shared": {
+		"empty": "Belum ada file yang dibagikan ke Anda dari provider yang kompatibel."
+	},
 	"drive": {
 		"title": "Drive Saya",
 		"starredTitle": "Berbintang",
@@ -100,7 +103,7 @@
 		"searchInFolder": "Telusuri folder ini...",
 		"noFiles": "Tidak ada file pada lokasi ini.",
 		"noOwner": "Tanpa pemilik",
-		"loadingMetadata": "Memuat metadata mirror...",
+		"loadingMetadata": "Sedang memuat...",
 		"rename": "Ganti nama",
 		"deleteConfirm": "Hapus {name}?",
 		"deleteConfirmDesc": "Item akan dipindahkan ke sampah.",

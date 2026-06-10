@@ -193,6 +193,66 @@ export class OneDriveAdapter extends BaseCloudAdapter {
 		return records;
 	}
 
+	async listSharedWithMe() {
+		const items = [];
+		let nextUrl = 'https://graph.microsoft.com/v1.0/me/drive/sharedWithMe?$select=id,name,remoteItem';
+
+		while (nextUrl) {
+			const payload = await this.graphAbsolute(nextUrl);
+			items.push(...(payload.value || []));
+			nextUrl = payload['@odata.nextLink'] || null;
+		}
+
+		return items
+			.map((item) => item.remoteItem || null)
+			.filter(Boolean)
+			.map((remote) => ({
+				file_name: remote.name,
+				is_folder: Boolean(remote.folder),
+				is_starred: 0,
+				size: Number(remote.size || 0),
+				mime_type: remote.file?.mimeType || null,
+				remote_file_id: remote.id,
+				remote_parent_id: remote.parentReference?.id || null,
+				remote_drive_id: remote.parentReference?.driveId || remote.parentReference?.driveType || null,
+				createdTime: remote.createdDateTime || null,
+				modifiedTime: remote.lastModifiedDateTime || null,
+				owner_name: remote.createdBy?.user?.displayName || null,
+				owner_email: remote.createdBy?.user?.email || this.account.email,
+			}));
+	}
+
+	async listSharedFolderChildren(folderRecord) {
+		const driveId = folderRecord.remote_drive_id;
+		if (!driveId) {
+			return [];
+		}
+
+		const items = [];
+		let nextUrl = `https://graph.microsoft.com/v1.0/drives/${encodeURIComponent(driveId)}/items/${encodeURIComponent(folderRecord.remote_file_id)}/children?$select=id,name,size,file,folder,parentReference,webUrl,createdDateTime,lastModifiedDateTime,createdBy`;
+
+		while (nextUrl) {
+			const payload = await this.graphAbsolute(nextUrl);
+			items.push(...(payload.value || []));
+			nextUrl = payload['@odata.nextLink'] || null;
+		}
+
+		return items.map((remote) => ({
+			file_name: remote.name,
+			is_folder: Boolean(remote.folder),
+			is_starred: 0,
+			size: Number(remote.size || 0),
+			mime_type: remote.file?.mimeType || null,
+			remote_file_id: remote.id,
+			remote_parent_id: remote.parentReference?.id || folderRecord.remote_file_id,
+			remote_drive_id: remote.parentReference?.driveId || driveId,
+			createdTime: remote.createdDateTime || null,
+			modifiedTime: remote.lastModifiedDateTime || null,
+			owner_name: remote.createdBy?.user?.displayName || null,
+			owner_email: remote.createdBy?.user?.email || this.account.email,
+		}));
+	}
+
 	async getStorageSummary() {
 		const drive = await this.graph('/me/drive?$select=quota');
 
@@ -309,7 +369,10 @@ export class OneDriveAdapter extends BaseCloudAdapter {
 
 		return {
 			name: remote.name,
+			file_name: remote.name,
+			is_folder: Boolean(remote.folder),
 			mimeType: remote.file?.mimeType || fileRecord.mime_type,
+			mime_type: remote.file?.mimeType || fileRecord.mime_type,
 			size: Number(remote.size || fileRecord.size || 0),
 			createdTime: remote.createdDateTime,
 			modifiedTime: remote.lastModifiedDateTime,
@@ -317,7 +380,9 @@ export class OneDriveAdapter extends BaseCloudAdapter {
 			webContentLink: null,
 			owner_name: remote.createdBy?.user?.displayName || null,
 			owner_email: remote.createdBy?.user?.email || this.account.email,
+			remote_file_id: remote.id,
 			remote_parent_id: remote.parentReference?.id || fileRecord.remote_parent_id || null,
+			remote_drive_id: remote.parentReference?.driveId || fileRecord.remote_drive_id || null,
 			provider: 'onedrive',
 		};
 	}

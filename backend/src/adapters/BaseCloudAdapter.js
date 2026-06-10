@@ -93,6 +93,14 @@ export class BaseCloudAdapter {
 		return [];
 	}
 
+	async listSharedWithMe() {
+		return [];
+	}
+
+	async listSharedFolderChildren() {
+		return [];
+	}
+
 	async setFileStarred() {
 		throw new Error(`Starred state is not supported for provider ${this.account.provider}`);
 	}

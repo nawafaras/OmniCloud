@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 import MyDriveView from '../views/MyDriveView.vue';
 import RecentView from '../views/RecentView.vue';
+import SharedWithMeView from '../views/SharedWithMeView.vue';
 import StarredView from '../views/StarredView.vue';
 import QuotaView from '../views/QuotaView.vue';
 
@@ -17,6 +18,11 @@ const router = createRouter({
 			path: '/my-drive',
 			name: 'my-drive',
 			component: MyDriveView,
+		},
+		{
+			path: '/shared-with-me',
+			name: 'shared-with-me',
+			component: SharedWithMeView,
 		},
 		{
 			path: '/recent',
