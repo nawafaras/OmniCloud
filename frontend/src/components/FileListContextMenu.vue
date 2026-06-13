@@ -17,6 +17,7 @@ const props = defineProps({
 	canRename: { type: Boolean, default: false },
 	canShowDetails: { type: Boolean, default: true },
 	canOpenFolder: { type: Boolean, default: false },
+	canDelete: { type: Boolean, default: true },
 });
 
 const emit = defineEmits(['open-folder', 'preview', 'toggle-star', 'download', 'rename', 'show-details', 'delete', 'close']);
@@ -66,7 +67,7 @@ function handleDelete() {
 			<IconDownload :size="17" :stroke="2" />
 			<span>{{ t('common.download') }}</span>
 		</button>
-		<button type="button" class="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-[#202124] hover:bg-[#f8fafd] disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-100 dark:hover:bg-slate-700/70" :disabled="!canRename" @click="handleRename">
+		<button v-if="canRename" type="button" class="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-[#202124] hover:bg-[#f8fafd] disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-100 dark:hover:bg-slate-700/70" :disabled="!canRename" @click="handleRename">
 			<IconEdit :size="17" :stroke="2" />
 			<span>{{ t('common.rename') }}</span>
 		</button>
@@ -74,7 +75,7 @@ function handleDelete() {
 			<IconInfoCircle :size="17" :stroke="2" />
 			<span>{{ t('drive.details') }}</span>
 		</button>
-		<button type="button" class="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-[#c5221f] hover:bg-[#fce8e6] dark:text-red-300 dark:hover:bg-red-950/30" @click="handleDelete">
+		<button v-if="canDelete" type="button" class="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-[#c5221f] hover:bg-[#fce8e6] dark:text-red-300 dark:hover:bg-red-950/30" @click="handleDelete">
 			<IconTrash :size="17" :stroke="2" />
 			<span>{{ t('common.delete') }}</span>
 		</button>
