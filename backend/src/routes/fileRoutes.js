@@ -1,10 +1,11 @@
 import { Router } from 'express';
-import { listFilesByPath, getFileById, getFileByRemoteId, listRecentFiles, listStarredFiles, searchFiles, setFileStarred, updateFileStarredByRemoteId } from '../services/fileService.js';
+import { listFilesByPath, getFileById, getFileByRemoteId, listFolderDescendants, listRecentFiles, listStarredFiles, searchFiles, setFileStarred, updateFileStarredByRemoteId } from '../services/fileService.js';
 import { getAccountById, getActiveAccounts } from '../services/accountService.js';
 import { createAdapter } from '../services/adapterRegistry.js';
 import { selectBestAccount } from '../services/spaceAllocator.js';
 import { syncAccount } from '../services/syncService.js';
 import { requireAppUser } from '../middleware/authMiddleware.js';
+import { streamZip } from '../utils/zipStream.js';
 
 const router = Router();
 
@@ -131,6 +132,77 @@ function ensureFileContext(context, res) {
 	}
 
 	return true;
+}
+
+function sanitizeArchivePath(value) {
+	return String(value || '')
+		.replace(/[\u0000-\u001f\u007f]/g, '')
+		.replaceAll('\\', '/')
+		.split('/')
+		.filter((segment) => segment.trim() && segment !== '.' && segment !== '..')
+		.join('/');
+}
+
+function contentDisposition(filename) {
+	const fallback = filename.replace(/[^\x20-\x7e]/g, '_').replaceAll('"', '') || 'download.zip';
+	return `attachment; filename="${fallback}"; filename*=UTF-8''${encodeURIComponent(filename)}`;
+}
+
+function buildArchiveEntries(userId, contexts) {
+	const entries = [];
+	const seenFiles = new Set();
+	const usedNames = new Set();
+
+	const addEntry = (file, archivePath) => {
+		const identity = `${file.cloud_account_id}:${file.remote_file_id}`;
+		if (seenFiles.has(identity)) return null;
+		seenFiles.add(identity);
+
+		const requestedName = sanitizeArchivePath(archivePath);
+		if (!requestedName) return null;
+		const isFolder = Boolean(file.is_folder);
+		const extensionIndex = isFolder ? -1 : requestedName.lastIndexOf('.');
+		const base = extensionIndex > requestedName.lastIndexOf('/') ? requestedName.slice(0, extensionIndex) : requestedName;
+		const extension = extensionIndex > requestedName.lastIndexOf('/') ? requestedName.slice(extensionIndex) : '';
+		let name = `${requestedName}${isFolder ? '/' : ''}`;
+		let suffix = 2;
+		while (usedNames.has(name)) {
+			name = `${base} (${suffix})${extension}${isFolder ? '/' : ''}`;
+			suffix += 1;
+		}
+		usedNames.add(name);
+
+		const account = getAccountById(userId, file.cloud_account_id);
+		if (!account || account.status !== 'active') {
+			throw new Error('One or more file accounts are no longer connected');
+		}
+		const adapter = createAdapter(account);
+		entries.push({
+			name,
+			modifiedAt: file.remote_modified_time ? new Date(file.remote_modified_time) : undefined,
+			openStream: file.is_folder ? undefined : () => adapter.getDownloadStream(file),
+		});
+		return name;
+	};
+
+	for (const context of contexts) {
+		const root = context.file;
+		if (!root.is_folder) {
+			addEntry(root, root.file_name);
+			continue;
+		}
+
+		const folderName = sanitizeArchivePath(root.file_name);
+		const rootArchiveName = addEntry(root, folderName)?.replace(/\/$/, '');
+		if (!rootArchiveName) continue;
+		const basePath = `${root.virtual_path}${root.file_name}/`;
+		for (const descendant of listFolderDescendants(userId, root)) {
+			const relativePath = `${descendant.virtual_path.slice(basePath.length)}${descendant.file_name}`;
+			addEntry(descendant, `${rootArchiveName}/${relativePath}`);
+		}
+	}
+
+	return entries;
 }
 
 async function deleteContextFile(userId, context, rawId = context?.file?.id, options = {}) {
@@ -294,6 +366,39 @@ router.get('/files/:id/download', async (req, res, next) => {
 		}
 		stream.pipe(res);
 	} catch (error) {
+		next(error);
+	}
+});
+
+router.post('/files/bulk/download', async (req, res, next) => {
+	try {
+		const ids = Array.isArray(req.body?.ids) ? [...new Set(req.body.ids.filter(Boolean))] : [];
+		if (!ids.length) {
+			return res.status(400).json({ error: 'At least one file id is required' });
+		}
+
+		const contexts = await Promise.all(ids.map((id) => getFileContext(req.user.id, id)));
+		const invalid = contexts.find((context) => !context.file || !context.account || context.account.status !== 'active' || !context.adapter);
+		if (invalid) {
+			return res.status(invalid.file ? 409 : 404).json({ error: invalid.file ? 'One or more file accounts are no longer connected' : 'One or more files were not found' });
+		}
+		if (contexts.some((context) => decodeSharedFileId(context.file.id) && context.file.is_folder)) {
+			return res.status(400).json({ error: 'Shared folders cannot be downloaded as ZIP yet' });
+		}
+
+		const entries = buildArchiveEntries(req.user.id, contexts);
+		const archiveName = contexts.length === 1 && contexts[0].file.is_folder
+			? `${sanitizeArchivePath(contexts[0].file.file_name) || 'folder'}.zip`
+			: 'omnicloud-download.zip';
+
+		res.setHeader('Content-Disposition', contentDisposition(archiveName));
+		res.setHeader('Content-Type', 'application/zip');
+		await streamZip(res, entries);
+	} catch (error) {
+		if (res.headersSent) {
+			res.destroy(error);
+			return;
+		}
 		next(error);
 	}
 });

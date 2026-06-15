@@ -199,6 +199,9 @@ export const api = {
 	downloadUrl(fileId) {
 		return `${API_BASE_URL}/files/${fileId}/download`;
 	},
+	bulkDownloadUrl() {
+		return `${API_BASE_URL}/files/bulk/download`;
+	},
 	previewUrl(fileId) {
 		return `${API_BASE_URL}/files/${fileId}/preview`;
 	},

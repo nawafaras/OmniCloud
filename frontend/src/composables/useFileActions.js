@@ -72,7 +72,7 @@ export function useFileActions({
 	} = useFileSelection({ sourceList, onBeforeSelect: closeContextMenu });
 
 	const canDownloadSelection = computed(
-		() => selectedFiles.value.some((file) => !file.is_folder),
+		() => selectedFiles.value.length > 0,
 	);
 	const canRenameSelection = computed(
 		() => selectedCount.value === 1 && primarySelectedFile.value?.capabilities?.rename !== false,
@@ -184,7 +184,7 @@ export function useFileActions({
 	}
 
 	function downloadSelection() {
-		const downloadableFiles = getActionFiles().filter((file) => !file.is_folder);
+		const downloadableFiles = getActionFiles();
 		closeContextMenu();
 		uploadQueueStore.downloadFiles(downloadableFiles).catch((error) => {
 			errorRef.value = error.message;
@@ -193,7 +193,7 @@ export function useFileActions({
 
 	function triggerDownload(file) {
 		closeContextMenu();
-		if (file?.is_folder) return;
+		if (!file) return;
 		uploadQueueStore.downloadFile(file).catch((error) => {
 			errorRef.value = error.message;
 		});

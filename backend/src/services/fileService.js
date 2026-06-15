@@ -126,6 +126,24 @@ export function listAllFiles(userId) {
 	return db.prepare('SELECT * FROM file_metadata WHERE user_id = ?').all(userId);
 }
 
+export function listFolderDescendants(userId, folder) {
+	const folderPath = normalizePath(`${folder.virtual_path}${folder.file_name}`);
+	const rows = db
+		.prepare(`
+			SELECT fm.*, ca.provider, ca.email
+			FROM file_metadata fm
+			INNER JOIN cloud_accounts ca ON ca.id = fm.cloud_account_id
+			WHERE fm.user_id = ?
+				AND fm.cloud_account_id = ?
+				AND fm.virtual_path LIKE ? ESCAPE '\\'
+				AND ca.status = 'active'
+			ORDER BY fm.virtual_path ASC, fm.is_folder DESC, fm.file_name COLLATE NOCASE ASC
+		`)
+		.all(userId, folder.cloud_account_id, `${folderPath.replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_')}%`);
+
+	return buildDisplayNames(rows);
+}
+
 export function listStarredFiles(userId) {
 	const rows = db
 		.prepare(`

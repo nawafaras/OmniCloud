@@ -44,6 +44,20 @@ function createBatchId() {
 	return crypto.randomUUID();
 }
 
+function getDownloadName(response, fallback) {
+	const disposition = response.headers.get('Content-Disposition') || '';
+	const encodedMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+	if (encodedMatch) {
+		try {
+			return decodeURIComponent(encodedMatch[1]);
+		} catch {
+			// Fall back to the basic filename below.
+		}
+	}
+	const match = disposition.match(/filename="([^"]+)"/i);
+	return match?.[1] || fallback;
+}
+
 export const useUploadQueueStore = defineStore('uploadQueue', {
 	state: () => ({
 		uploads: [],
@@ -170,8 +184,12 @@ export const useUploadQueueStore = defineStore('uploadQueue', {
 			return this.downloadFiles(file ? [file] : []);
 		},
 		async downloadFiles(files) {
-			const downloadableFiles = files.filter((file) => file && !file.is_folder);
+			const downloadableFiles = files.filter(Boolean);
 			if (!downloadableFiles.length) return;
+
+			if (downloadableFiles.length > 1 || downloadableFiles.some((file) => file.is_folder)) {
+				return this.downloadArchive(downloadableFiles);
+			}
 
 			const batchId = createBatchId();
 			const batchTotal = downloadableFiles.length;
@@ -190,7 +208,10 @@ export const useUploadQueueStore = defineStore('uploadQueue', {
 			});
 
 			try {
-				const response = await fetch(api.downloadUrl(file.id), { signal: abortController.signal });
+				const response = await fetch(api.downloadUrl(file.id), {
+					credentials: 'include',
+					signal: abortController.signal,
+				});
 				if (!response.ok) {
 					const payload = await response.json().catch(() => ({ error: 'Download failed' }));
 					throw new Error(payload.error || 'Download failed');
@@ -244,6 +265,50 @@ export const useUploadQueueStore = defineStore('uploadQueue', {
 				});
 				if (batchTotal === 1) throw error;
 			}
+			}
+		},
+		async downloadArchive(files) {
+			const abortController = new AbortController();
+			const fallbackName = files.length === 1 && files[0].is_folder
+				? `${files[0].display_name || files[0].file_name}.zip`
+				: 'omnicloud-download.zip';
+			const queueItem = this.registerOperation({
+				type: 'download',
+				name: fallbackName,
+				status: 'downloading',
+				abortController,
+				batchTotal: files.length,
+			});
+
+			try {
+				const response = await fetch(api.bulkDownloadUrl(), {
+					method: 'POST',
+					credentials: 'include',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ ids: files.map((file) => file.id) }),
+					signal: abortController.signal,
+				});
+				if (!response.ok) {
+					const payload = await response.json().catch(() => ({ error: 'Download failed' }));
+					throw new Error(payload.error || 'Download failed');
+				}
+
+				const blob = await response.blob();
+				const url = URL.createObjectURL(blob);
+				const link = document.createElement('a');
+				link.href = url;
+				link.download = getDownloadName(response, fallbackName);
+				document.body.appendChild(link);
+				link.click();
+				link.remove();
+				URL.revokeObjectURL(url);
+				this.updateUpload(queueItem.id, { progress_percentage: 100, status: 'completed' });
+			} catch (error) {
+				this.updateUpload(queueItem.id, {
+					status: isAbortError(error) ? 'cancelled' : 'failed',
+					error: isAbortError(error) ? null : error.message,
+				});
+				if (!isAbortError(error)) throw error;
 			}
 		},
 		async uploadFiles(files, currentPath, onCompleted) {
